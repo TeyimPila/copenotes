@@ -1,0 +1,24 @@
+version: '3'
+services:
+  client:
+    container_name: copenotes-client
+    restart: always
+    build:
+      dockerfile: ./Dockerfile.local
+      context: ./client
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./client/:/usr/src/app
+    depends_on:
+      - api
+  api:
+    container_name: copenotes-api
+    restart: always
+    build:
+      dockerfile: ./Dockerfile.local
+      context: ./api
+    ports:
+      - '8001:8001'
+    volumes:
+      - ./api/:/usr/src/app

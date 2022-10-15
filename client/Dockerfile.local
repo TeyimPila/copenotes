@@ -1,0 +1,16 @@
+FROM node:alpine
+
+WORKDIR /usr/src/app
+
+RUN apk add yarn
+
+RUN yarn add --dev @swc/cli @swc/core
+
+COPY package.json yarn.lock ./
+RUN yarn install
+
+COPY ./ ./
+
+EXPOSE 3000
+
+CMD ["yarn", "dev"]

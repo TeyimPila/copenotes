@@ -1,0 +1,244 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Cope Notes API Docs",
+    "description": "A sample API that's implemented for the purpose of completing a take home assignment for cope notes",
+    "termsOfService": "https://swagger.io/terms/",
+    "contact": {
+      "name": "Teyim Pila"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "basePath": "/api/v1",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "description": "Creates a new user.  Duplicates are not allowed",
+        "operationId": "createUser",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "new user",
+            "in": "body",
+            "required": true,
+            "description": "Properties of the new user to create",
+            "schema": {
+              "$ref": "#/definitions/NewUser"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User creation response",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "default": {
+            "description": "Request Resulted in an error",
+            "schema": {
+              "$ref": "#/definitions/ErrorModel"
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Gets all users in the database",
+        "operationId": "getUsers",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all users response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "default": {
+            "description": "Request Resulted in an error",
+            "schema": {
+              "$ref": "#/definitions/ErrorModel"
+            }
+          }
+        }
+      }
+    },
+    "/messages": {
+      "post": {
+        "description": "Creates a new message.  Duplicates are not allowed",
+        "operationId": "createUser",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "New message",
+            "in": "body",
+            "description": "New message to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewMessage"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message creation response",
+            "schema": {
+              "$ref": "#/definitions/Message"
+            }
+          },
+          "default": {
+            "description": "Request Resulted in an error",
+            "schema": {
+              "$ref": "#/definitions/ErrorModel"
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Gets all messages in the database",
+        "operationId": "getMessages",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all messages response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Message"
+              }
+            }
+          },
+          "default": {
+            "description": "Request Resulted in an error",
+            "schema": {
+              "$ref": "#/definitions/ErrorModel"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/NewUser"
+        },
+        {
+          "required": [
+            "_id",
+            "email"
+          ],
+          "properties": {
+            "_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        }
+      ]
+    },
+    "NewUser": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "locale": {
+          "type": "string"
+        }
+      }
+    },
+    "Message": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/NewMessage"
+        },
+        {
+          "required": [
+            "_id",
+            "message"
+          ],
+          "properties": {
+            "_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "message": {
+              "type": "string",
+              "format": "text"
+            },
+            "locale": {
+              "type": "string",
+              "format": "i18n locale"
+            }
+          }
+        }
+      ]
+    },
+    "NewMessage": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        }
+      }
+    },
+    "ErrorModel": {
+      "type": "object",
+      "required": [
+        "code",
+        "error"
+      ],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "error": {
+          "type": "string",
+          "format": "text"
+        }
+      }
+    }
+  }
+}

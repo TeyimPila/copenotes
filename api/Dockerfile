@@ -1,0 +1,15 @@
+FROM node:16.10.0-alpine
+
+WORKDIR /usr/src/app
+
+RUN apk add yarn
+
+COPY package.json yarn.lock ./
+
+RUN yarn install --frozen-lockfile
+
+COPY ./ ./
+
+EXPOSE 8001
+
+CMD ["yarn", "start"]

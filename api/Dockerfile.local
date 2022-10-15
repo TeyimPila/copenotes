@@ -1,0 +1,16 @@
+FROM node:16.10.0-alpine
+
+WORKDIR /usr/src/app
+
+RUN apk add yarn
+
+COPY package.json yarn.lock ./
+
+RUN npm cache clean -f
+RUN yarn install
+
+COPY ./ ./
+
+EXPOSE 8001
+
+CMD ["yarn", "start:dev"]
