@@ -5,17 +5,23 @@ I have dockerized the application, so it can be run easily and consistently on a
 
 ### Prerequisites:
 - Have Node 16 or higher installed
+- The yarn node package manager is installed
 - Docker is installed
 
 To get the local environment up and running, execute the follow steps
 
-NOTE that these commands assume the use of a Linux based OS such as MacOS or Ubuntu. Use the respective windows commands if you're running this on Windows
+NOTE 1: that these commands assume the use of a Linux based OS such as MacOS or Ubuntu. Use the respective windows commands if you're running this on Windows
+
+NOTE 2: While I have tested these steps and everything works, I understand that you might face some issues while going through them. Please, feel free to reach out to me for any clarifications
+
 1. Clone the repository by running `git clone https://github.com/TeyimPila/copenotes.git`
 2. Navigate into the project's api folder: `cd copenotes/api`
-3. Run `touch .env.development && cp .env.example` to create the development environment .env file
-4. Open the newly created `.env.development` file in your favorite editor and replace `SG.example`and `d-example` with the correct sendgrid API key and template IDs respectively. The values for `SENDGRID_API_KEY` and `MESSAGE_TEMPLATE_ID` will be sent to Molly as part of my submission, since these are sensitive credentials and can't be share on github
+3. Install dependencies: `yarn install`
+4. Run `touch .env.development && cp .env.example .env.development` to create the development environment .env file
+5. Open the newly created `.env.development` file in your favorite editor and replace `SG.example`and `d-example` with the correct sendgrid API key and template IDs respectively. The values for `SENDGRID_API_KEY` and `MESSAGE_TEMPLATE_ID` will be sent to Molly as part of my submission, since these are sensitive credentials and can't be share on github
 6. While still in the `copenotes/api` directory, seed the development database with sample messages by running `yarn seed`
-8. Navigate out of the `api` directory back into the root of the repo: `cd ..`
+7. Navigate out of the `api` directory back into the root of the repo: `cd ..`
+8. Navigate into the client and install dependencies and navigate out: `cd client && yarn install && cd ..`
 9. Run: `yarn run:dev` and wait for the docker containers to build and start
 10. Access the frontend application through `http://localhost:3000`
 11. Create a user and wait for the emails to come in 🙂
