@@ -66,11 +66,12 @@ The client is a NextJS application in the `copenotes/client` folder. It uses mat
 - Keep it as simple as possible
 - Take advantage of NextJS server side rendering for better performance
 
-### What can be improved?
+### What can be improved in the client?
 - Better decomposition of components for reuse
 - Better error handling
 - Some code refactoring
 - Write Tests
+- Better form input validation
 
 ## Possible overall improvements
 - Considering the fact that mental health crises is global, I would add the ability for users to choose a language when registering, and translate messages to all supported languages so that users can receive messages in their own language. 🇬🇧🇵🇹🇩🇪🇫🇷🇺🇸🇳🇬
