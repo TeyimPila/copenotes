@@ -20,8 +20,9 @@ NOTE that these commands assume the use of a Linux based OS such as MacOS or Ubu
 8. Navigate out of the `api` directory back into the root of the repo: `cd ..`
 9. Run: `yarn run:dev` and wait for the docker containers to build and start
 10. Access the frontend application through `http://localhost:3000`
-11. The API runs at: `http://localhost:8001`
-12. The API documentations can be seen at `http://localhost:8001/read-the-docs`
+11. Create a user and wait for the emails to come in 🙂
+12. The API runs at: `http://localhost:8001`
+13. The API documentations can be seen at `http://localhost:8001/read-the-docs`
 
 ## The API
 The API is a simple well-structured express server, running NodeJS. See the folder structure below
