@@ -13,8 +13,7 @@ NOTE that these commands assume the use of a Linux based OS such as MacOS or Ubu
 1. Clone the repository by running `git clone https://github.com/TeyimPila/copenotes.git`
 2. Navigate into the project's api folder: `cd copenotes/api`
 3. Run `touch .env.development && cp .env.example` to create the development environment .env file
-4. Open the newly created `.env.development` file in your favorite editor and replace `SG.example`and `d-example` with the correct sendgrid API key and template IDs respectively
-5. *NOTE:* The values for `SENDGRID_API_KEY` and `MESSAGE_TEMPLATE_ID` will be sent to Molly as part of my submission, since these are sensitive credentials and can't be share on github
+4. Open the newly created `.env.development` file in your favorite editor and replace `SG.example`and `d-example` with the correct sendgrid API key and template IDs respectively. The values for `SENDGRID_API_KEY` and `MESSAGE_TEMPLATE_ID` will be sent to Molly as part of my submission, since these are sensitive credentials and can't be share on github
 6. While still in the `copenotes/api` directory, seed the development database with sample messages by running `yarn seed`
 7. Now, everything is ready to start the servers
 8. Navigate out of the `api` directory back into the root of the repo: `cd ..`
