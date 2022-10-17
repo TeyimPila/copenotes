@@ -1,6 +1,6 @@
 import styles from '../../styles/Home.module.css'
 import Layout from "../../components/layout";
-import axios from "../../config/axios";
+import {clientInstance, ssInstance} from "../../config/axios";
 import {Avatar, Fab, Grid, IconButton, List, ListItem, ListItemAvatar, ListItemText} from "@mui/material";
 import CommentIcon from '@mui/icons-material/Comment';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,7 +22,7 @@ const UserDashboard = ({ users: existingUsers }) => {
     setLoading(true)
 
     try {
-      const { data = {}, } = await axios.post('/users', values)
+      const { data = {}, } = await clientInstance.post('/users', values)
 
       if (data.user?._id) {
         setUsers([...users, data.user])
@@ -108,7 +108,7 @@ export default UserDashboard
 
 export async function getServerSideProps({ req, res }) {
 
-  const { data = [] } = await axios.get('/users') || {}
+  const { data = [] } = await ssInstance.get('/users') || {}
   // TODO: Add better error handling
   return {
     props: data,

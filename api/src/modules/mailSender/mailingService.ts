@@ -1,4 +1,4 @@
-import logger from 'winston'
+import logger from '../../config/logger'
 import { StatusCodes } from 'http-status-codes'
 import { v4 } from 'uuid'
 

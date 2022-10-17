@@ -1,6 +1,6 @@
 import styles from '../../styles/Home.module.css'
 import Layout from "../../components/layout";
-import axios from "../../config/axios";
+import {clientInstance, ssInstance} from "../../config/axios";
 import {Avatar, Fab, Grid, IconButton, List, ListItem, ListItemAvatar, ListItemText} from "@mui/material";
 import CommentIcon from '@mui/icons-material/Comment';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,13 +22,14 @@ const MessageDashboard = ({ messages: existingMessages }) => {
     setLoading(true)
 
     try {
-      const { data = {}, } = await axios.post('/messages', values)
+      const { data = {}, } = await clientInstance.post('/messages', values)
 
       if (data.message?._id) {
         setMessages([...messages, data.message])
       }
 
     } catch (e) {
+      console.error(e)
       setErrorMessage(e?.response?.data?.error)
       setLoading(false)
       return
@@ -103,7 +104,7 @@ export default MessageDashboard
 
 export async function getServerSideProps({ req, res }) {
 
-  const { data = [] } = await axios.get('/messages') || {}
+  const { data = [] } = await ssInstance.get('/messages') || {}
 
   // TODO: Add better error handling
 

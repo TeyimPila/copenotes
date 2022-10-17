@@ -8,15 +8,16 @@
     "url": "#"
   },
   "engines": {
-    "node": "14.x"
+    "node": ">=16.x"
   },
   "bugs": "#",
   "scripts": {
-    "start": "cross-env NODE_ENV=production NODE_PATH=./src ts-node .",
+    "start": "cross-env NODE_ENV=production NODE_PATH=./src ts-node src",
     "start:dev": "cross-env NODE_PATH=./src NODE_ENV=development ts-node-dev --watch src src",
     "test": "cross-env NODE_ENV=test jest --runInBand --collectCoverage --verbose",
     "lint": "eslint --debug src",
     "lint:fix": "eslint --debug src --fix",
+    "seed": "cross-env NODE_ENV='development' ts-node src/seed/seedDb.ts",
     "prettier": "prettier \"**/*.+(js|jsx|json|css|md)\"",
     "prettier:fix": "prettier --write \"**/*.+(js|jsx|json|css|md)\""
   },
