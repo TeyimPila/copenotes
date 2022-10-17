@@ -80,6 +80,7 @@ The client is a NextJS application in the `copenotes/client` folder. It uses mat
 - Add authentication and authorization to make sure that only authorized users can use the app
 - Add ability for update user and message details from the dashboard
 - Deploy to a live environment: I would have loved to host this but Heroku took away our free tier 🥲. Alternatives are not as good but this will be a nice challenge
+- Make the API more performant by setting up and full DBMS and using better queries
 
 ## Folder Structure
 ```text
