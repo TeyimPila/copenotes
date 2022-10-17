@@ -1,5 +1,5 @@
-import app from './server'
-import env from './config/env'
+import app from './src/server'
+import env from './src/config/env'
 import logger from 'winston'
 
 export const startApp = async () => {
