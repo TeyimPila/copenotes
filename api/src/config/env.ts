@@ -20,7 +20,8 @@ const env: Env = {
   APP_NAME: process.env.APP_NAME || 'copenotes-api',
   APP_PORT: process.env.APP_PORT ? Number(process.env.APP_PORT) : 8001,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
-  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || ''
+  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',
+  EXECUTION_INTERVAL_IN_MINUTES: process.env.EXECUTION_INTERVAL_IN_MINUTES ? Number(process.env.EXECUTION_INTERVAL_IN_MINUTES) : 1
 }
 
 export default env

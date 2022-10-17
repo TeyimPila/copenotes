@@ -4,4 +4,5 @@ export type Env = {
   APP_NAME: string
   APP_PORT: number
   SENDGRID_API_KEY: string
+  EXECUTION_INTERVAL_IN_MINUTES: number
 }

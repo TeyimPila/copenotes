@@ -3,6 +3,8 @@
 ## The API
 
 ### Running Local Environment
+### Implementation Consideration
+### ERD
 ### API Documentation
 ### Test Coverage
 ### What can be improved?
@@ -10,10 +12,11 @@
 ## The Client
 
 ### Running Local Environment
+### Implementation Consideration
 ### What can be improved?
 
 ## Folder Structure
-```bash
+```text
 .
 |-- README.md
 |-- api

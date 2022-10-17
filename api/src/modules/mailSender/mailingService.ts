@@ -1,5 +1,6 @@
 import logger from 'winston'
 import { StatusCodes } from 'http-status-codes'
+import { v4 } from 'uuid'
 
 import sendgridMail from '../../config/sendgrid'
 import { Message } from '../message/types'
@@ -8,7 +9,6 @@ import UserModel from '../user/userModel'
 import UserMessageModel, { DeliveryStatus } from '../user/userMessageModel'
 import { User } from '../user/types'
 import env from '../../config/env'
-import { v4 } from 'uuid'
 
 export default class MailingService {
   private static instance: MailingService
@@ -43,9 +43,9 @@ export default class MailingService {
     }
   }
 
-  public static getMessagesToSend(): Message[] {
-    // In a DBMS that supports more complex queries, for better performance, I would use joins to get only the messages that haven't been sent "SUCCESSFULLY" to all users
-    return MessageModel.find().filter(message => {
+  public static getRandomMessageToSend(): Message | undefined {
+    // In a DBMS that supports more complex queries, for better performance, I would use joins to get only the message that hasn't been sent "SUCCESSFULLY" to all users
+    const messagesThatCanBeSent = MessageModel.find().filter(message => {
       const userIds = UserModel.find().map(({ _id }) => _id)
 
       // user messages that were sent to all users successfully.
@@ -58,6 +58,13 @@ export default class MailingService {
 
       return successfulDeliveries.length != userIds.length
     })
+
+    if (!messagesThatCanBeSent.length) {
+      return
+    }
+
+    // return a random message
+    return messagesThatCanBeSent[Math.floor(Math.random() * messagesThatCanBeSent.length)]
   }
 
   getEligibleMessageRecipients(message: Message): User[] {
@@ -79,7 +86,7 @@ export default class MailingService {
       logger.warn('MailingService already started')
       return
     }
-    this.intervalHandle = setInterval(() => this.sendMessages(), 6000) // dynamic interval
+    this.intervalHandle = setInterval(() => this.sendMessage(), env.EXECUTION_INTERVAL_IN_MINUTES * 6000) // dynamic interval
     logger.info('MailingService started')
   }
 
@@ -92,54 +99,52 @@ export default class MailingService {
     logger.info('MailingService stopped')
   }
 
-  async sendMessages(): Promise<void> {
+  async sendMessage(): Promise<void> {
     try {
-      const messagesToSend: Message[] = MailingService.getMessagesToSend()
-      let eligibleRecipients: User[]
+      const messageToSend: Message | undefined = MailingService.getRandomMessageToSend()
 
-      logger.info('sending messages to users...', messagesToSend)
+      // If there wasn't a message to send, then stop interval
+      if (!messageToSend) {
+        logger.info('All messages have been sent to all users. Stopping mail sender...')
+        this.stop()
+        return
+      }
+
+      const eligibleRecipients: User[] = this.getEligibleMessageRecipients(messageToSend)
+
+      logger.info('sending messages to users...', { messageToSend, eligibleRecipients })
       await Promise.all(
-        messagesToSend.map(async message => {
-          eligibleRecipients = this.getEligibleMessageRecipients(message)
+        eligibleRecipients.map(async recipient => {
+          const responses = await MailingService.sendUserMessage(recipient, messageToSend)
+          const statusCode = responses?.[0]?.statusCode
 
-          if (!eligibleRecipients.length) {
-            logger.info('No users are eligible to received this message', { message })
+          if (statusCode !== StatusCodes.ACCEPTED) {
+            logger.warn('Failed to deliver message to user', { message: messageToSend, recipient })
             return
           }
 
-          await Promise.all(
-            eligibleRecipients.map(async recipient => {
-              const responses = await MailingService.sendUserMessage(recipient, message)
-              const statusCode = responses?.[0]?.statusCode
+          const existingUserMessages = UserMessageModel.find({
+            user: recipient._id,
+            message: messageToSend._id,
+            deliveryStatus: DeliveryStatus.FAILED
+          })
 
-              if (statusCode !== StatusCodes.ACCEPTED) {
-                logger.warn('Failed to deliver message to user', { message, recipient })
-                return
-              }
+          // if the message was sent unsuccessfully before, update the delivery status
+          if (existingUserMessages.length) {
+            const existingUserMessage = existingUserMessages[0]
+            existingUserMessage.deliveryStatus = statusCode === StatusCodes.ACCEPTED ? 'SUCCEEDED' : 'FAILED'
+            existingUserMessage.save()
+            return
+          }
 
-              const existingUserMessages = UserMessageModel.find({ user: recipient._id, message: message._id, deliveryStatus: DeliveryStatus.FAILED })
-
-              // if the message was sent unsuccessfully before, update the delivery status
-              if (existingUserMessages.length) {
-                const existingUserMessage = existingUserMessages[0]
-                existingUserMessage.deliveryStatus = statusCode === StatusCodes.ACCEPTED ? 'SUCCEEDED' : 'FAILED'
-                existingUserMessage.save()
-                return
-              }
-
-              UserMessageModel.create({
-                _id: v4(),
-                user: recipient._id,
-                message: message._id,
-                deliveryStatus: statusCode === StatusCodes.ACCEPTED ? 'SUCCEEDED' : 'FAILED'
-              }).save()
-            })
-          )
+          UserMessageModel.create({
+            _id: v4(),
+            user: recipient._id,
+            message: messageToSend._id,
+            deliveryStatus: statusCode === StatusCodes.ACCEPTED ? 'SUCCEEDED' : 'FAILED'
+          }).save()
         })
       )
-
-      logger.info('All messages have been sent to all users. Stopping mail sender...')
-      this.stop()
     } catch (error) {
       logger.error('Error when attempting to send message', error)
     }

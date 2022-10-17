@@ -9,6 +9,7 @@ import { teardown } from './helpers'
 import { Message } from '../modules/message/types'
 import { User } from '../modules/user/types'
 import sendgridMail from '../config/sendgrid'
+import env from '../config/env'
 
 describe('mailingService', () => {
   afterEach(async () => {
@@ -24,7 +25,7 @@ describe('mailingService', () => {
     expect(instance1.intervalHandle).not.toBeNull()
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    expect(instance1.intervalHandle._idleTimeout).toBe(6000)
+    expect(instance1.intervalHandle._idleTimeout).toBe(env.EXECUTION_INTERVAL_IN_MINUTES * 6000)
 
     // calling start again shouldn't restart a running cron
     instance1.start()
@@ -33,14 +34,12 @@ describe('mailingService', () => {
     expect(instance1.intervalHandle).toEqual(instance2.intervalHandle)
   })
 
-  const runTestGetMessagesToSend = expectedMessages => {
-    const messagesToSend = MailingService.getMessagesToSend()
-
-    expect(messagesToSend.length).toEqual(expectedMessages.length)
-    expect(messagesToSend).toEqual(expect.arrayContaining(expectedMessages))
+  const runTestGetMessageToSend = possibleMessages => {
+    const messageToSend = MailingService.getRandomMessageToSend()
+    expect(possibleMessages).toContainEqual(messageToSend)
   }
 
-  test('getMessagesToSend should return empty list if all messages have been successfully sent to all users', () => {
+  test('getRandomMessageToSend return undefined if all messages have been sent to all users', () => {
     const user1 = UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
     const user2 = UserModel.create({ _id: v4(), email: 'user2@gmail.com' }).save()
     const message1 = MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
@@ -56,10 +55,10 @@ describe('mailingService', () => {
     expect(UserModel.find().length).toEqual(2)
     expect(UserMessageModel.find().length).toEqual(4)
 
-    runTestGetMessagesToSend([])
+    runTestGetMessageToSend([undefined])
   })
 
-  test('getMessagesToSend should return messages that were not sent successfully to at least 1 user', () => {
+  test('getRandomMessageToSend should return a random message that was not sent successfully to at least 1 user', () => {
     const user1 = UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
     const user2 = UserModel.create({ _id: v4(), email: 'user2@gmail.com' }).save()
     const message1 = MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
@@ -77,10 +76,10 @@ describe('mailingService', () => {
     expect(UserMessageModel.find().length).toEqual(4)
 
     // Notice that message2 failed to deliver to user 1. So we can attempt to send message 2 to user one again
-    runTestGetMessagesToSend([message2, message3])
+    runTestGetMessageToSend([message2, message3])
   })
 
-  test('getMessagesToSend should return NO messages if no users exist to receive them', () => {
+  test('getRandomMessageToSend should return NO message if no users exist to receive it', () => {
     MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
     MessageModel.create({ _id: v4(), message: 'Another Awesome text message' }).save()
     MessageModel.create({ _id: v4(), message: 'Not yet sent to anyone' }).save()
@@ -89,10 +88,10 @@ describe('mailingService', () => {
     expect(MessageModel.find().length).toEqual(3)
 
     // Notice that message2 failed to deliver to user 1. So we can attempt to send message 2 to user one again
-    runTestGetMessagesToSend([])
+    runTestGetMessageToSend([undefined])
   })
 
-  test('getMessagesToSend should return ALL messages that have not been sent to any users AND users exist', () => {
+  test('getRandomMessageToSend should return a random message that has not been sent to any users AND users exist', () => {
     const message1 = MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
     const message2 = MessageModel.create({ _id: v4(), message: 'Another Awesome text message' }).save()
     const message3 = MessageModel.create({ _id: v4(), message: 'Not yet sent to anyone' }).save()
@@ -103,7 +102,7 @@ describe('mailingService', () => {
     expect(MessageModel.find().length).toEqual(3)
 
     // Notice that message2 failed to deliver to user 1. So we can attempt to send message 2 to user one again
-    runTestGetMessagesToSend([message1, message2, message3])
+    runTestGetMessageToSend([message1, message2, message3])
   })
 
   test('getEligibleMessageRecipients should get all users who have not yet received given message or failed to receive the message', () => {
@@ -148,30 +147,32 @@ describe('mailingService', () => {
   test('sendMessages should successfully send messages and create UserMessages', async () => {
     sendgridMail.send = jest.fn().mockReturnValue([{ statusCode: StatusCodes.ACCEPTED }])
 
-    const user = UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
-    const message = MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
+    UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
+    UserModel.create({ _id: v4(), email: 'user2@gmail.com' }).save()
+    UserModel.create({ _id: v4(), email: 'user3@gmail.com' }).save()
+    MessageModel.create({ _id: v4(), message: 'Awesome text message 1' }).save()
+    MessageModel.create({ _id: v4(), message: 'Awesome text message 2' }).save()
 
     expect(UserMessageModel.find().length).toEqual(0)
 
     const mailService = MailingService.getInstance()
-    await mailService.sendMessages()
+    await mailService.sendMessage()
 
+    expect(sendgridMail.send).toHaveBeenCalledTimes(3)
     const userMessages = UserMessageModel.find()
-    const userMessage = userMessages[0]
-    expect(userMessages.length).toEqual(1)
-    expect(userMessage.user).toEqual(user._id)
-    expect(userMessage.message).toEqual(message._id)
-    expect(userMessage.deliveryStatus).toEqual(DeliveryStatus.SUCCEEDED)
+    // Test runs in less than a minute, so only 1 of the 2 messages should have been sent
+    expect(userMessages.length).toEqual(3)
+    expect(userMessages.every(um => um.deliveryStatus === DeliveryStatus.SUCCEEDED)).toBeTruthy()
   })
 
-  test('sendMessages should only send messages to users who have not received it before', async () => {
-    sendgridMail.send = jest.fn().mockReturnValue([{ statusCode: StatusCodes.ACCEPTED }])
+  test('sendMessage should only send a message to users who have not received it before', async () => {
+    const mockSend = jest.fn().mockReturnValue([{ statusCode: StatusCodes.ACCEPTED }])
+    sendgridMail.send = mockSend
 
     const user1 = UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
     const user2 = UserModel.create({ _id: v4(), email: 'user2@gmail.com' }).save()
     const message1 = MessageModel.create({ _id: v4(), message: 'Awesome text message' }).save()
     const message2 = MessageModel.create({ _id: v4(), message: 'Another Awesome text message' }).save()
-    const message3 = MessageModel.create({ _id: v4(), message: 'Not yet sent to anyone' }).save()
 
     UserMessageModel.create({ _id: v4(), user: user1._id, message: message1._id, deliveryStatus: DeliveryStatus.SUCCEEDED }).save()
     UserMessageModel.create({ _id: v4(), user: user1._id, message: message2._id, deliveryStatus: DeliveryStatus.FAILED }).save()
@@ -179,24 +180,27 @@ describe('mailingService', () => {
     UserMessageModel.create({ _id: v4(), user: user2._id, message: message2._id, deliveryStatus: DeliveryStatus.SUCCEEDED }).save()
 
     // Make sure that records were created successfully
-    expect(MessageModel.find().length).toEqual(3)
+    expect(MessageModel.find().length).toEqual(2)
     expect(UserModel.find().length).toEqual(2)
     expect(UserMessageModel.find().length).toEqual(4)
 
     const mailService = MailingService.getInstance()
-    await mailService.sendMessages()
+    await mailService.sendMessage()
 
     // message 3 is sent to each of the two users
-    expect(UserMessageModel.find().length).toEqual(6)
+    expect(UserMessageModel.find().length).toEqual(4)
     const previouslyFailedDelivery = UserMessageModel.find({ user: user1._id, message: message2._id })[0]
     expect(previouslyFailedDelivery.deliveryStatus).toEqual(DeliveryStatus.SUCCEEDED)
+    expect(sendgridMail.send).toHaveBeenCalledTimes(1) // resend the previously failed delivery
 
+    mockSend.mockClear()
     // running send messages twice should resend messages
-    await mailService.sendMessages()
-    expect(UserMessageModel.find().length).toEqual(6)
+    await mailService.sendMessage()
+    expect(UserMessageModel.find().length).toEqual(4)
+    expect(sendgridMail.send).toHaveBeenCalledTimes(0)
   })
 
-  test('if all users have received all messages, sendMessages should not send any message', async () => {
+  test('if all users have received all messages, sendMessage should not send any message', async () => {
     sendgridMail.send = jest.fn().mockReturnValue([{ statusCode: StatusCodes.ACCEPTED }])
     const user1 = UserModel.create({ _id: v4(), email: 'user1@gmail.com' }).save()
     const user2 = UserModel.create({ _id: v4(), email: 'user2@gmail.com' }).save()
@@ -209,7 +213,7 @@ describe('mailingService', () => {
     UserMessageModel.create({ _id: v4(), user: user2._id, message: message2._id, deliveryStatus: DeliveryStatus.SUCCEEDED }).save()
 
     const mailService = MailingService.getInstance()
-    await mailService.sendMessages()
+    await mailService.sendMessage()
 
     expect(sendgridMail.send).not.toHaveBeenCalled()
   })
